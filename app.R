@@ -27,6 +27,9 @@ data <- left_join(data, measure_range, by = "DateTime")
 
 # Define the UI for the Shiny app
 ui <- fluidPage(
+  tags$head(
+    tags$style(HTML("hr {border-top: 1px solid #000000;}"))
+  ),
   titlePanel("Stadt-Thermometer App"),
   sidebarLayout(
     sidebarPanel(
@@ -35,7 +38,10 @@ ui <- fluidPage(
       selectInput("secondStation", "Select Second Station (Optional)", c("None", unique(data$Station))),
       helpText(HTML("Check the <a href='https://stadtplan.winterthur.ch/?topic=Stadtthermometer_Juli23' target='_blank'>official city map</a> for station information (e.g. location). For more information about the project, see the <a href='https://stadt.winterthur.ch/themen/leben-in-winterthur/energie-umwelt-natur/klimaanpassung/stadt-thermometer' target='_blank'>project website</a>.")),
       helpText("The grey area indicates the range of values measured across all stations active at the time."),
-      helpText(HTML("App by <a href='https://uelireber.ch' target='_blank'>Ueli Reber</a>, code on <a href='https://github.com/ureber/stadtthermometer' target='_blank'>GitHub</a> (CC BY-SA), V 2023-11-09"), style = "font-size: 8px;")
+      helpText(HTML("App by <a href='https://uelireber.ch' target='_blank'>Ueli Reber</a>, code on <a href='https://github.com/ureber/stadtthermometer' target='_blank'>GitHub</a> (CC BY-SA), V 2023-11-09"), style = "font-size: 8px;"),
+      hr(),
+      h4("Summary Statistics"),
+      tableOutput("summaryTable")
     ),
     mainPanel(
       plotOutput("temperaturePlot"),
@@ -95,6 +101,64 @@ server <- function(input, output) {
       
       print(gg)
   }) 
+  
+  # Display summary information as a table with rounded numbers
+  output$summaryTable <- renderTable({
+    
+    # Summary data for all stations
+    summary_all_stations <- data.frame(
+      Metric = rep(c("Average Temperature", "Min Temperature", "Max Temperature", "Average Humidity", "Min Humidity", "Max Humidity"), each = 1),
+      Value = c(
+        mean(filteredData()$Temperature, na.rm = TRUE),
+        min(filteredData()$Temperature, na.rm = TRUE),
+        max(filteredData()$Temperature, na.rm = TRUE),
+        mean(filteredData()$Humidity, na.rm = TRUE),
+        min(filteredData()$Humidity, na.rm = TRUE),
+        max(filteredData()$Humidity, na.rm = TRUE)
+      )
+    )
+    
+    # Summary data for Station_1
+    summary_station_1 <- data.frame(
+      Metric = rep(c("Average Temperature", "Min Temperature", "Max Temperature", "Average Humidity", "Min Humidity", "Max Humidity"), each = 1),
+      Value = c(
+        mean(filteredData()$Temperature[filteredData()$Station == input$station], na.rm = TRUE),
+        min(filteredData()$Temperature[filteredData()$Station == input$station], na.rm = TRUE),
+        max(filteredData()$Temperature[filteredData()$Station == input$station], na.rm = TRUE),
+        mean(filteredData()$Humidity[filteredData()$Station == input$station], na.rm = TRUE),
+        min(filteredData()$Humidity[filteredData()$Station == input$station], na.rm = TRUE),
+        max(filteredData()$Humidity[filteredData()$Station == input$station], na.rm = TRUE)
+      )
+    )
+    
+    # Summary data for Station_2 (if selected)
+    if (input$secondStation != "None") {
+      summary_station_2 <- data.frame(
+        Metric = rep(c("Average Temperature", "Min Temperature", "Max Temperature", "Average Humidity", "Min Humidity", "Max Humidity"), each = 1),
+        Value = c(
+          mean(filteredData()$Temperature[filteredData()$Station == input$secondStation], na.rm = TRUE),
+          min(filteredData()$Temperature[filteredData()$Station == input$secondStation], na.rm = TRUE),
+          max(filteredData()$Temperature[filteredData()$Station == input$secondStation], na.rm = TRUE),
+          mean(filteredData()$Humidity[filteredData()$Station == input$secondStation], na.rm = TRUE),
+          min(filteredData()$Humidity[filteredData()$Station == input$secondStation], na.rm = TRUE),
+          max(filteredData()$Humidity[filteredData()$Station == input$secondStation], na.rm = TRUE)
+        )
+      )
+      
+      # Combine data frames for all stations, Station_1, and Station_2
+      summary_data <- left_join(summary_all_stations, summary_station_1, by = "Metric") %>%
+        rename(All_Stations = Value.x, Station_1 = Value.y) %>%
+        left_join(summary_station_2, by = "Metric") %>%
+        rename(Station_2 = Value)
+    } else {
+      # Combine data frames for all stations and Station_1
+      summary_data <- left_join(summary_all_stations, summary_station_1, by = "Metric") %>%
+        rename(All_Stations = Value.x, Station_1 = Value.y)
+    }
+    
+    return(summary_data)
+  }, row.names = FALSE)
+  
 }
 
 # Run the Shiny app
