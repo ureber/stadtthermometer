@@ -35,7 +35,7 @@ ui <- fluidPage(
       selectInput("secondStation", "Select Second Station (Optional)", c("None", unique(data$Station))),
       helpText(HTML("Check the <a href='https://stadtplan.winterthur.ch/?topic=Stadtthermometer_Juli23' target='_blank'>official city map</a> for station information (e.g. location). For more information about the project, see the <a href='https://stadt.winterthur.ch/themen/leben-in-winterthur/energie-umwelt-natur/klimaanpassung/stadt-thermometer' target='_blank'>project website</a>.")),
       helpText("The grey area indicates the range of values measured across all stations active at the time."),
-      helpText(HTML("App by <a href='https://uelireber.ch' target='_blank'>Ueli Reber</a>, code on <a href='https://github.com/ureber/stadtthermometer target='_blank'>GitHub</a> (CC BY-SA), V 2023-11-09"), style = "font-size: 8px;")
+      helpText(HTML("App by <a href='https://uelireber.ch' target='_blank'>Ueli Reber</a>, code on <a href='https://github.com/ureber/stadtthermometer' target='_blank'>GitHub</a> (CC BY-SA), V 2023-11-09"), style = "font-size: 8px;")
     ),
     mainPanel(
       plotOutput("temperaturePlot"),
