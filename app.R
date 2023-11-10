@@ -30,17 +30,17 @@ ui <- fluidPage(
   tags$head(
     tags$style(HTML("hr {border-top: 1px solid #000000;}"))
   ),
-  titlePanel("Stadt-Thermometer App"),
+  titlePanel("App zur explorativen Analyse der Daten aus dem Citizen-Science-Projekt «Stadt-Thermometer»"),
   sidebarLayout(
     sidebarPanel(
-      dateRangeInput("dateRange", "Select Date Range", start = min(data$DateTime), end = max(data$DateTime)),
-      selectInput("station", "Select First Station (Purple)", unique(data$Station)),
-      selectInput("secondStation", "Select Second Station (Green)", c("None", unique(data$Station))),
-      helpText(HTML("Check the <a href='https://stadtplan.winterthur.ch/?topic=Stadtthermometer_Juli23' target='_blank'>official city map</a> for station information (e.g. Sensor ID for station selection). For more information about the project, see the <a href='https://stadt.winterthur.ch/themen/leben-in-winterthur/energie-umwelt-natur/klimaanpassung/stadt-thermometer' target='_blank'>project website</a>.")),
-      helpText("The grey area indicates the range of values measured across all stations active at the time."),
-      helpText(HTML("App by <a href='https://uelireber.ch' target='_blank'>Ueli Reber</a>, code on <a href='https://github.com/ureber/stadtthermometer' target='_blank'>GitHub</a> (CC BY-SA), V 2023-11-09"), style = "font-size: 8px;"),
+      dateRangeInput("dateRange", "Datumsbereich auswählen", start = min(data$DateTime), end = max(data$DateTime)),
+      selectInput("station", "Erste Station: SensorID auswählen (Violett)", unique(data$Station)),
+      selectInput("secondStation", "Zweite Station: SensorID auswählen (Grün)", c("None", unique(data$Station))),
+      helpText(HTML("Die SensorID und weitere Informationen zu den Stationen können auf dem <a href='https://stadtplan.winterthur.ch/?topic=Stadtthermometer_Juli23' target='_blank'>Stadtplan der Stadt Winterthur</a> nachgeschaut werden. Weitere Informationen zum Projekt und die hier angezeigten Rohdaten gibt es auf der offiziellen <a href='https://stadt.winterthur.ch/themen/leben-in-winterthur/energie-umwelt-natur/klimaanpassung/stadt-thermometer' target='_blank'>Projekt-Website</a>.")),
+      helpText("Der graue Bereich zeigt die Bandbreite der gemessenen Werte aller zu diesem Zeitpunkt aktiven Stationen."),
+      helpText(HTML("App von <a href='https://uelireber.ch' target='_blank'>Ueli Reber</a>, Code auf <a href='https://github.com/ureber/stadtthermometer' target='_blank'>GitHub</a> (CC BY-SA), V 2023-11-10"), style = "font-size: 9px;"),
       hr(),
-      h4("Summary Statistics"),
+      h4("Zusammenfassende Statistiken"),
       tableOutput("summaryTable")
     ),
     mainPanel(
@@ -63,7 +63,7 @@ server <- function(input, output) {
     gg <- ggplot(filteredData(), aes(x = DateTime, y = Temperature, color = Station)) +
       geom_ribbon(data = filteredData(), aes(ymin = min_temp, ymax = max_temp),
                   fill = "gray80", color = NA) +
-      labs(title = "Temperature Time Series", x = "Date Time", y = "Temperature (°C)") +
+      labs(title = "Temperatur", x = "Zeit", y = "Temperatur (°C)") +
       scale_color_discrete(name = "Station") +
       theme_minimal()
     
@@ -85,7 +85,7 @@ server <- function(input, output) {
       gg <- ggplot(filteredData(), aes(x = DateTime, y = Humidity, color = Station)) +
         geom_ribbon(data = filteredData(), aes(ymin = min_hum, ymax = max_hum),
                     fill = "gray80", color = NA) +
-        labs(title = "Relative Humidity Time Series", x = "Date Time", y = "Relative Humidity (%)") +
+        labs(title = "Relative Luftfeuchtigkeit", x = "Zeit", y = "Relative Luftfeuchtigkeit (%)") +
         scale_color_discrete(name = "Station") +
         theme_minimal()
       
@@ -107,7 +107,7 @@ server <- function(input, output) {
     
     # Summary data for all stations
     summary_all_stations <- data.frame(
-      Metric = rep(c("Average Temperature", "Min Temperature", "Max Temperature", "Average Humidity", "Min Humidity", "Max Humidity"), each = 1),
+      Metric = rep(c("Mittlere Temperatur", "Tiefste Temperatur", "Höchste Temperature", "Mittlere rel. Luftfeuchtigkeit", "Tiefste rel. Luftfeuchtigkeit", "Höchste rel. Luftfeuchtigkeit"), each = 1),
       Value = c(
         mean(filteredData()$Temperature, na.rm = TRUE),
         min(filteredData()$Temperature, na.rm = TRUE),
@@ -120,7 +120,7 @@ server <- function(input, output) {
     
     # Summary data for Station_1
     summary_station_1 <- data.frame(
-      Metric = rep(c("Average Temperature", "Min Temperature", "Max Temperature", "Average Humidity", "Min Humidity", "Max Humidity"), each = 1),
+      Metric = rep(c("Mittlere Temperatur", "Tiefste Temperatur", "Höchste Temperature", "Mittlere rel. Luftfeuchtigkeit", "Tiefste rel. Luftfeuchtigkeit", "Höchste rel. Luftfeuchtigkeit"), each = 1),
       Value = c(
         mean(filteredData()$Temperature[filteredData()$Station == input$station], na.rm = TRUE),
         min(filteredData()$Temperature[filteredData()$Station == input$station], na.rm = TRUE),
@@ -134,7 +134,7 @@ server <- function(input, output) {
     # Summary data for Station_2 (if selected)
     if (input$secondStation != "None") {
       summary_station_2 <- data.frame(
-        Metric = rep(c("Average Temperature", "Min Temperature", "Max Temperature", "Average Humidity", "Min Humidity", "Max Humidity"), each = 1),
+        Metric = rep(c("Mittlere Temperatur", "Tiefste Temperatur", "Höchste Temperature", "Mittlere rel. Luftfeuchtigkeit", "Tiefste rel. Luftfeuchtigkeit", "Höchste rel. Luftfeuchtigkeit"), each = 1),
         Value = c(
           mean(filteredData()$Temperature[filteredData()$Station == input$secondStation], na.rm = TRUE),
           min(filteredData()$Temperature[filteredData()$Station == input$secondStation], na.rm = TRUE),
@@ -149,11 +149,11 @@ server <- function(input, output) {
       summary_data <- left_join(summary_all_stations, summary_station_1, by = "Metric") %>%
         rename(All_Stations = Value.x, Station_1 = Value.y) %>%
         left_join(summary_station_2, by = "Metric") %>%
-        rename(Station_2 = Value)
+        rename(Kennzahl = Metric, Station_2 = Value)
     } else {
       # Combine data frames for all stations and Station_1
       summary_data <- left_join(summary_all_stations, summary_station_1, by = "Metric") %>%
-        rename(All_Stations = Value.x, Station_1 = Value.y)
+        rename(Kennzahl = Metric, All_Stations = Value.x, Station_1 = Value.y)
     }
     
     return(summary_data)
