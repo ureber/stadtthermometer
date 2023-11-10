@@ -147,13 +147,13 @@ server <- function(input, output) {
       
       # Combine data frames for all stations, Station_1, and Station_2
       summary_data <- left_join(summary_all_stations, summary_station_1, by = "Metric") %>%
-        rename(All_Stations = Value.x, Station_1 = Value.y) %>%
+        rename(Alle_Stationen = Value.x, Station_1 = Value.y) %>%
         left_join(summary_station_2, by = "Metric") %>%
         rename(Kennzahl = Metric, Station_2 = Value)
     } else {
       # Combine data frames for all stations and Station_1
       summary_data <- left_join(summary_all_stations, summary_station_1, by = "Metric") %>%
-        rename(Kennzahl = Metric, All_Stations = Value.x, Station_1 = Value.y)
+        rename(Kennzahl = Metric, Alle_Stationen = Value.x, Station_1 = Value.y)
     }
     
     return(summary_data)
